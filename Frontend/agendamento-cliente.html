@@ -1,110 +1,150 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Escolha seu barbeiro, serviço e horário para agendar na barbearia."
-    />
-    <link rel="stylesheet" href="css/agendamento-cliente.css" />
-    <title>Agende seu horário</title>
-  </head>
-  <body>
-    <div class="page">
-      <nav class="topbar" aria-label="Barbearia">
-        <a class="brand" href="home.html" id="nome-barbearia">Barber Control</a>
-      </nav>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+          name="description"
+          content="Escolha seu barbeiro, serviço e horário para agendar na barbearia."
+  />
+  <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <link rel="stylesheet" href="css/agendamento-cliente.css" />
+  <title>Agende seu horário</title>
+  <style>
+    /* Estilo exclusivo do botão do WhatsApp */
+    .whatsapp-area {
+      display: flex;
+      justify-content: center;
+      margin: 36px 0 12px;
+    }
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 26px;
+      border-radius: 999px;
+      background: #25d366;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 6px 16px rgba(37, 211, 102, 0.3);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-whatsapp:hover {
+      background: #1ebe5b;
+      transform: translateY(-1px);
+    }
+    .btn-whatsapp i {
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <nav class="topbar" aria-label="Barbearia">
+    <a class="brand" href="home.html" id="nome-barbearia">Barber Control</a>
+  </nav>
 
-      <header class="hero">
-        <div class="hero-inner">
-          <div class="shop-info" id="barbearia-info" hidden>
-            <img id="barbearia-foto" alt="Foto da barbearia" hidden />
-            <p id="barbearia-endereco"></p>
-          </div>
-          <h1>Agende seu horário</h1>
-          <p>Preencha seus dados, escolha o barbeiro, o serviço e um horário disponível.</p>
-        </div>
-      </header>
-
-      <main>
-        <form id="booking-form" class="booking-form">
-          <fieldset class="booking-step">
-            <legend><span class="step-number">1</span> Seus dados</legend>
-            <div class="customer-fields">
-              <div class="field">
-                <label for="nome">Nome completo</label>
-                <input
-                  id="nome"
-                  name="nome"
-                  type="text"
-                  placeholder="Como podemos te chamar?"
-                  minlength="2"
-                  maxlength="100"
-                  autocomplete="name"
-                  required
-                />
-              </div>
-              <div class="field">
-                <label for="telefone">Telefone (WhatsApp)</label>
-                <input
-                  id="telefone"
-                  name="telefone"
-                  type="tel"
-                  placeholder="(61) 90000-0000"
-                  maxlength="15"
-                  autocomplete="tel"
-                  required
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset class="booking-step">
-            <legend><span class="step-number">2</span> Escolha o barbeiro</legend>
-            <div class="barber-options" id="barbeiros">
-              <p class="loading-message">Carregando barbeiros...</p>
-            </div>
-          </fieldset>
-
-          <fieldset class="booking-step">
-            <legend><span class="step-number">3</span> Escolha um ou mais serviços</legend>
-            <div class="service-options" id="servicos">
-              <p class="loading-message">Selecione um barbeiro para ver os serviços.</p>
-            </div>
-          </fieldset>
-
-          <fieldset class="booking-step">
-            <legend><span class="step-number">4</span> Dia e horário</legend>
-            <div class="date-fields">
-              <div class="field">
-                <label for="data">Data</label>
-                <input id="data" name="data" type="date" required />
-              </div>
-              <div class="field">
-                <label for="hora">Horário disponível</label>
-                <select id="hora" name="hora" required disabled>
-                  <option value="">Escolha a data, o barbeiro e o serviço</option>
-                </select>
-              </div>
-            </div>
-          </fieldset>
-
-          <div class="form-footer">
-            <p class="privacy-notice">
-              Seus dados serão usados para gerenciar este agendamento.
-              Consulte nossa
-              <a href="politica-privacidade.html?origem=cliente" target="_blank" rel="noopener">
-                política de privacidade
-              </a>.
-            </p>
-            <button type="submit" id="btn-agendar" disabled>Confirmar agendamento</button>
-            <p id="form-message" role="status" aria-live="polite"></p>
-          </div>
-        </form>
-      </main>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="shop-info" id="barbearia-info" hidden>
+        <img id="barbearia-foto" alt="Foto da barbearia" hidden />
+        <p id="barbearia-endereco"></p>
+      </div>
+      <h1>Agende seu horário</h1>
+      <p>Preencha seus dados, escolha o barbeiro, o serviço e um horário disponível.</p>
     </div>
-    <script src="js/config.js"></script>
-    <script src="js/agendamento-cliente.js"></script>
-  </body>
+  </header>
+
+  <main>
+    <form id="booking-form" class="booking-form">
+      <fieldset class="booking-step">
+        <legend><span class="step-number">1</span> Seus dados</legend>
+        <div class="customer-fields">
+          <div class="field">
+            <label for="nome">Nome completo</label>
+            <input
+                    id="nome"
+                    name="nome"
+                    type="text"
+                    placeholder="Como podemos te chamar?"
+                    minlength="2"
+                    maxlength="100"
+                    autocomplete="name"
+                    required
+            />
+          </div>
+          <div class="field">
+            <label for="telefone">Telefone (WhatsApp)</label>
+            <input
+                    id="telefone"
+                    name="telefone"
+                    type="tel"
+                    placeholder="(61) 90000-0000"
+                    maxlength="15"
+                    autocomplete="tel"
+                    required
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="booking-step">
+        <legend><span class="step-number">2</span> Escolha o barbeiro</legend>
+        <div class="barber-options" id="barbeiros">
+          <p class="loading-message">Carregando barbeiros...</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="booking-step">
+        <legend><span class="step-number">3</span> Escolha um ou mais serviços</legend>
+        <div class="service-options" id="servicos">
+          <p class="loading-message">Selecione um barbeiro para ver os serviços.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="booking-step">
+        <legend><span class="step-number">4</span> Dia e horário</legend>
+        <div class="date-fields">
+          <div class="field">
+            <label for="data">Data</label>
+            <input id="data" name="data" type="date" required />
+          </div>
+          <div class="field">
+            <label for="hora">Horário disponível</label>
+            <select id="hora" name="hora" required disabled>
+              <option value="">Escolha a data, o barbeiro e o serviço</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="form-footer">
+        <p class="privacy-notice">
+          Seus dados serão usados para gerenciar este agendamento.
+          Consulte nossa
+          <a href="politica-privacidade.html?origem=cliente" target="_blank" rel="noopener">
+            política de privacidade
+          </a>.
+        </p>
+        <button type="submit" id="btn-agendar" disabled>Confirmar agendamento</button>
+        <p id="form-message" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+
+    <!-- Botão do WhatsApp Centralizado -->
+    <div class="whatsapp-area">
+      <a id="btn-whatsapp" class="btn-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Falar no WhatsApp
+      </a>
+    </div>
+  </main>
+</div>
+<script src="js/config.js"></script>
+<script src="js/agendamento-cliente.js"></script>
+</body>
 </html>

@@ -14,6 +14,9 @@
   const shopPhoto = document.getElementById("barbearia-foto");
   const shopAddress = document.getElementById("barbearia-endereco");
 
+  //  número do WhatsApp da barbearia (DDI + DDD + Número, apenas dígitos)
+  const WHATSAPP_NUMERO = "5561986214939";
+
   let barbers = [];
   let services = [];
   let availabilityRequest = 0;
@@ -48,34 +51,62 @@
 
   function selectedValues(groupName) {
     return Array.from(
-      form.querySelectorAll(`input[name="${groupName}"]:checked`),
-      (input) => input.value,
+        form.querySelectorAll(`input[name="${groupName}"]:checked`),
+        (input) => input.value,
     );
+  }
+
+  // Atualiza o link do WhatsApp dinamicamente com base nas escolhas do cliente
+  function atualizarWhatsapp() {
+    const link = document.getElementById("btn-whatsapp");
+    if (!link) return;
+
+    const partes = ["Olá! Gostaria de agendar um horário."];
+
+    const selectedBarberInput = form.querySelector('input[name="barbeiro"]:checked');
+    if (selectedBarberInput) {
+      const label = selectedBarberInput.closest("label");
+      if (label) partes.push(`Barbeiro: ${label.textContent.trim()}`);
+    }
+
+    const servicosNomes = Array.from(form.querySelectorAll('input[name="servico"]:checked'))
+        .map(cb => {
+          const label = cb.closest(".service-card") || cb.closest("label");
+          const nameEl = label?.querySelector(".service-name");
+          return nameEl ? nameEl.textContent.trim() : "";
+        }).filter(Boolean);
+
+    if (servicosNomes.length > 0) {
+      partes.push(`Serviço(s): ${servicosNomes.join(", ")}`);
+    }
+
+    const dataVal = dateInput.value;
+    const horaVal = timeSelect.value;
+    if (dataVal && horaVal) {
+      const dataBr = dataVal.split("-").reverse().join("/");
+      partes.push(`Data e horário: ${dataBr} às ${horaVal}`);
+    }
+
+    link.href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(partes.join("\n"))}`;
   }
 
   function updateSubmitState() {
     submitButton.disabled =
-      isSubmitting ||
-      !nameInput.value.trim() ||
-      phoneInput.value.replace(/\D/g, "").length < 10 ||
-      !selectedValue("barbeiro") ||
-      !selectedValues("servico").length ||
-      !dateInput.value ||
-      !timeSelect.value;
+        isSubmitting ||
+        !nameInput.value.trim() ||
+        phoneInput.value.replace(/\D/g, "").length < 10 ||
+        !selectedValue("barbeiro") ||
+        !selectedValues("servico").length ||
+        !dateInput.value ||
+        !timeSelect.value;
+
+    atualizarWhatsapp();
   }
 
   function clearTimeOptions(placeholder) {
     timeSelect.replaceChildren(new Option(placeholder, ""));
     timeSelect.disabled = true;
-  }
-
-  function selectedRadioCard(container, radio) {
-    container.querySelectorAll("label").forEach((label) => {
-      label.classList.toggle(
-        "is-selected",
-        label.querySelector('input[type="radio"]')?.checked === true,
-      );
-    });
+    atualizarWhatsapp();
   }
 
   function renderBarbers() {
@@ -101,7 +132,6 @@
       radio.setAttribute("aria-label", `Barbeiro ${name.textContent}`);
       if (index === 0) radio.checked = true;
       radio.addEventListener("change", () => {
-        selectedRadioCard(barberOptions, radio);
         setMessage("");
         loadServicesAndShop();
         updateSubmitState();
@@ -110,6 +140,7 @@
       barberOptions.appendChild(label);
       if (radio.checked) label.classList.add("is-selected");
     });
+    atualizarWhatsapp();
   }
 
   function renderServices() {
@@ -187,7 +218,7 @@
 
     try {
       const data = await getJson(
-        `${api}/barbearia?barbeiroId=${encodeURIComponent(barberId)}`,
+          `${api}/barbearia?barbeiroId=${encodeURIComponent(barberId)}`,
       );
       if (requestId !== barberRequest) return;
       if (data.nomeBarbearia) shopName.textContent = data.nomeBarbearia;
@@ -222,7 +253,7 @@
 
     try {
       const data = await getJson(
-        `${api}/servicos?barbeiroId=${encodeURIComponent(barberId)}`,
+          `${api}/servicos?barbeiroId=${encodeURIComponent(barberId)}`,
       );
       if (currentServiceRequest !== serviceRequest) return;
       services = Array.isArray(data) ? data : [];
@@ -326,7 +357,7 @@
       const bookedDate = new Date(`${dateInput.value}T${timeSelect.value}:00`);
       const formattedDate = bookedDate.toLocaleDateString("pt-BR");
       const barberName = barbers.find(
-        (barber) => String(barber.id) === selectedValue("barbeiro"),
+          (barber) => String(barber.id) === selectedValue("barbeiro"),
       )?.nome;
       const bookedTime = timeSelect.value;
       nameInput.value = "";
@@ -334,8 +365,8 @@
       timeSelect.value = "";
       await loadAvailability();
       setMessage(
-        `Agendamento confirmado para ${formattedDate} às ${bookedTime}${barberName ? ` com ${barberName}` : ""}.`,
-        "success",
+          `Agendamento confirmado para ${formattedDate} às ${bookedTime}${barberName ? ` com ${barberName}` : ""}.`,
+          "success",
       );
     } catch (error) {
       setMessage(error.message || "Erro de conexão. Tente novamente.", "error");
@@ -372,4 +403,5 @@
 
   updateSubmitState();
   loadBarbers();
+  atualizarWhatsapp();
 })();
