@@ -5,7 +5,7 @@ const togglePass = document.querySelector(".toggle-visibility");
 const inputSenha = document.getElementById("senha");
 
 if (localStorage.getItem("token")) {
-  window.location.href = "index.html";
+  window.location.href = "painel.html";
 }
 
 togglePass.addEventListener("click", () => {
@@ -32,7 +32,7 @@ form.addEventListener("submit", async (e) => {
   try {
     const dados = await apiLogin(email, senha);
     localStorage.setItem("token", dados.token);
-    window.location.href = "index.html";
+    window.location.href = "painel.html";
   } catch (err) {
     erroEl.textContent = "Email ou senha incorretos.";
     erroEl.classList.add("visivel");

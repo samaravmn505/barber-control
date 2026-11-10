@@ -42,6 +42,11 @@ public class Agendamento {
 
     private String status; // AGENDADO, CONCLUIDO, CANCELADO
 
+    @Column(length = 20)
+    private String origem = "PAINEL";
+
+    private boolean notificacaoLida = true;
+
     public Agendamento(
             Long id,
             Usuario barbeiro,

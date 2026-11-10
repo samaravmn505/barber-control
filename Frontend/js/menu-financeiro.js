@@ -36,6 +36,6 @@ const Permissoes = (() => {
       .querySelectorAll('a[href="barbeiros.html"]')
       .forEach((link) => link.closest("li")?.remove());
   if (location.pathname.endsWith("barbeiros.html")) {
-    location.href = "index.html";
+    location.href = "painel.html";
   }
 })();

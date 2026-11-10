@@ -1,0 +1,96 @@
+.notifications-main {
+  display: block;
+}
+
+.notifications-page {
+  width: min(100%, 1050px);
+  margin: 0 auto;
+}
+
+.notifications-page .welcome-header p {
+  margin-bottom: 24px;
+}
+
+.notifications-status {
+  margin: 0 0 16px;
+  color: #666;
+}
+
+.notifications-status:empty {
+  display: none;
+}
+
+.notifications-status.is-error {
+  color: #a32626;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 14px;
+}
+
+.notification-card {
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid #dedede;
+  border-left: 4px solid #c8c8c8;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.notification-card.is-unread {
+  border-left-color: #ffc107;
+}
+
+.notification-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notification-card-heading h2 {
+  font-size: 19px;
+}
+
+.notification-state {
+  color: #666;
+  font-size: 13px;
+}
+
+.notification-card.is-unread .notification-state {
+  color: #8a6400;
+  font-weight: 700;
+}
+
+.notification-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.notification-details dt {
+  margin-bottom: 4px;
+  color: #777;
+  font-size: 12px;
+}
+
+.notification-details dd {
+  font-size: 14px;
+}
+
+.notification-read-button {
+  margin-top: 16px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #fff;
+  cursor: pointer;
+}
+
+.notification-read-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}

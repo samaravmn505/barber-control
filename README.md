@@ -15,12 +15,15 @@ Sistema de gerenciamento para barbearias.
 - `GET /api/barbeiros` e `POST /api/barbeiros`: listam e cadastram barbeiros da barbearia autenticada.
 - Serviços exigem uma foto PNG, JPEG ou WEBP de até 2 MB ao cadastrar; a foto pode ser atualizada ao editar e também é retornada pela listagem pública para uso na tela de agendamento.
 - `GET /api/agendamentos?barbeiroId={id}`: lista os agendamentos do barbeiro escolhido; sem o parâmetro lista a barbearia inteira.
+- `GET /api/agendamentos/notificacoes`: lista os agendamentos enviados pela página pública, indicando quais ainda não foram lidos. `PATCH /api/agendamentos/{id}/notificacao-lida` marca uma notificação como lida.
 - Os serviços criados após esta atualização ficam associados à barbearia autenticada. Serviços antigos sem `barbearia_id` precisam ser atribuídos à barbearia correta antes de voltarem a aparecer; não são compartilhados automaticamente entre contas.
 - Para migrar serviços antigos, identifique o ID do responsável em `usuario` e associe os serviços legados correspondentes em `servico` preenchendo `barbearia_id`.
 
 ## Preparar deploy
 
 O frontend é estático e a API usa Java 21, Spring Boot e MySQL. A API pode ser publicada por Docker; o arquivo `Dockerfile` está na raiz do repositório.
+
+A raiz do frontend (`/`) abre a página pública `home.html`; o painel administrativo fica em `Frontend/painel.html`.
 
 Para executar localmente, defina `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` e `JWT_SECRET` no ambiente antes de iniciar a API. Nenhuma senha de banco ou chave JWT deve ser adicionada ao repositório.
 

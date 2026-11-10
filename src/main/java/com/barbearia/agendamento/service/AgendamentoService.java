@@ -56,6 +56,14 @@ public class AgendamentoService {
         return agendamentoRepository.findByBarbeiroDaBarbearia(barbeiroId, barbeariaId);
     }
 
+    @Transactional
+    public void marcarNotificacaoLida(Long id) {
+        agendamentoRepository.findById(id).ifPresent(agendamento -> {
+            agendamento.setNotificacaoLida(true);
+            agendamentoRepository.save(agendamento);
+        });
+    }
+
     public Optional<Agendamento> buscarPorId(Long id) {
         return agendamentoRepository.findById(id);
     }

@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -84,6 +85,20 @@ class AgendamentoServiceTests {
         pedido.setDataHora(existente.getDataHora().minusMinutes(45));
 
         assertThrows(IllegalStateException.class, () -> agendamentoService.criarAgendamento(pedido));
+    }
+
+    @Test
+    void marcaNotificacaoDoAgendamentoComoLida() {
+        Agendamento agendamento = new Agendamento();
+        agendamento.setId(12L);
+        agendamento.setNotificacaoLida(false);
+        when(agendamentoRepository.findById(12L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(agendamento)).thenReturn(agendamento);
+
+        agendamentoService.marcarNotificacaoLida(12L);
+
+        assertTrue(agendamento.isNotificacaoLida());
+        verify(agendamentoRepository).save(agendamento);
     }
 
     private Agendamento novoAgendamento(Usuario barbeiro, List<Long> servicoIds) {

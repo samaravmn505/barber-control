@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/notificacoes.css" />
+    <title>Notificações - BarberControl</title>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="profile-container">
+        <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="profile-name" id="profile-name">Barbearia</div>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="painel.html" class="nav-link"
+            ><i class="fa-solid fa-house"></i> Início</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="agendamento.html" class="nav-link"
+            ><i class="fa-regular fa-calendar-days"></i> Agendamentos</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="servicos.html" class="nav-link"
+            ><i class="fa-solid fa-bars"></i> Serviços</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="barbeiros.html" class="nav-link"
+            ><i class="fa-solid fa-user-group"></i> Barbeiros</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="notificacoes.html" class="nav-link active" aria-current="page"
+            ><i class="fa-regular fa-bell"></i> Notificações
+            <span class="notification-badge" aria-label="0 notificações não lidas" hidden>0</span></a
+          >
+        </li>
+        <li class="nav-item nav-financeiro">
+          <button
+            type="button"
+            class="nav-link nav-financeiro-toggle"
+            aria-expanded="false"
+          >
+            <i class="fa-solid fa-wallet"></i> Financeiro
+            <i
+              class="fa-solid fa-chevron-down nav-financeiro-chevron"
+              aria-hidden="true"
+            ></i>
+          </button>
+          <ul class="nav-financeiro-submenu">
+            <li><a href="financeiro-entradas.html">Entrada</a></li>
+            <li><a href="financeiro-saidas.html">Saída</a></li>
+          </ul>
+        </li>
+        <li class="nav-item" style="border: none">
+          <a href="login.html" id="btn-logout" class="nav-link"
+            ><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a
+          >
+        </li>
+      </ul>
+    </aside>
+
+    <main class="main-content notifications-main">
+      <section class="notifications-page">
+        <header class="welcome-header">
+          <h1>Notificações</h1>
+          <p>Agendamentos feitos pelos clientes na página de agendamento.</p>
+        </header>
+        <p id="notifications-status" class="notifications-status" role="status" aria-live="polite">
+          Carregando notificações...
+        </p>
+        <div id="notifications-list" class="notifications-list"></div>
+      </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/sidebar-barbearia.js"></script>
+    <script src="js/menu-financeiro.js"></script>
+    <script src="js/notificacoes.js"></script>
+  </body>
+</html>

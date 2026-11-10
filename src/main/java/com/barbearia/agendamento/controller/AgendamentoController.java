@@ -13,14 +13,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/agendamentos")
 public class AgendamentoController {
+
+    public record NotificacaoResponse(
+            Long id,
+            String clienteNome,
+            LocalDateTime dataHora,
+            String barbeiroNome,
+            List<String> servicos,
+            String status,
+            boolean lida
+    ) {}
 
     @Autowired
     private AgendamentoService agendamentoService;
@@ -84,6 +96,8 @@ public class AgendamentoController {
             if (invalido != null) return invalido;
 
             agendamento.setBarbeiro(barbeiro);
+            agendamento.setOrigem("PAINEL");
+            agendamento.setNotificacaoLida(true);
             return ResponseEntity.ok(agendamentoService.criarAgendamento(agendamento));
         } catch (IllegalStateException e) {
             return erro(HttpStatus.CONFLICT, e.getMessage());
@@ -105,6 +119,36 @@ public class AgendamentoController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
         }
+    }
+
+    @GetMapping("/notificacoes")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> listarNotificacoes(Authentication authentication) {
+        var ctx = contexto.de(authentication);
+        Long barbeiroId = ctx.admin() ? null : ctx.usuario().getId();
+        return ResponseEntity.ok(agendamentoService.listarDaBarbearia(ctx.barbeariaId(), barbeiroId).stream()
+                .filter(agendamento -> "CLIENTE".equals(agendamento.getOrigem()))
+                .map(agendamento -> new NotificacaoResponse(
+                        agendamento.getId(),
+                        agendamento.getClienteNome(),
+                        agendamento.getDataHora(),
+                        agendamento.getBarbeiro().getNome(),
+                        agendamento.getServicos().stream().map(Servico::getNome).toList(),
+                        agendamento.getStatus(),
+                        agendamento.isNotificacaoLida()
+                ))
+                .toList());
+    }
+
+    @PatchMapping("/{id}/notificacao-lida")
+    public ResponseEntity<Void> marcarNotificacaoLida(@PathVariable Long id, Authentication authentication) {
+        Optional<Agendamento> agendamento = acessivel(id, contexto.de(authentication))
+                .filter(item -> "CLIENTE".equals(item.getOrigem()));
+        if (agendamento.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        agendamentoService.marcarNotificacaoLida(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/barbeiro/{barbeiroId}")

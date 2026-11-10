@@ -86,6 +86,26 @@ body {
   width: 20px;
 }
 
+.notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.notification-badge[hidden] {
+  display: none;
+}
+
 .nav-financeiro {
   position: relative;
   padding-bottom: 0;

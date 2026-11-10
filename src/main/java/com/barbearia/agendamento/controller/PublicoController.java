@@ -206,6 +206,8 @@ public class PublicoController {
         agendamento.setClienteNome(nome);
         agendamento.setClienteTelefone(telefone);
         agendamento.setDataHora(req.dataHora());
+        agendamento.setOrigem("CLIENTE");
+        agendamento.setNotificacaoLida(false);
 
         try {
             Agendamento criado = agendamentoService.criarAgendamento(agendamento);
