@@ -1,6 +1,7 @@
 (() => {
   const notificationsBadge = document.querySelector(".notification-badge");
   const avatarEl = document.querySelector(".profile-avatar");
+  const profileNameEl = document.querySelector(".profile-name");
   if (!avatarEl && !notificationsBadge) return;
 
   if (avatarEl) {
@@ -40,6 +41,9 @@
         }
 
         const dados = await resposta.json();
+        if (profileNameEl && dados.nomeBarbearia) {
+          profileNameEl.textContent = dados.nomeBarbearia;
+        }
         window.atualizarFotoSidebar(dados.foto);
       } catch (erro) {
         console.error("Não foi possível carregar a foto da barbearia na sidebar.", erro);
