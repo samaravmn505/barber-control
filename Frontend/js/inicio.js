@@ -7,6 +7,11 @@ let gastosDoMes = [];
 let resumoFinanceiroMes = null;
 let fluxoChart = null;
 let servicosChart = null;
+let funcionamento = {
+  horarioAbertura: "08:00",
+  horarioEncerramento: "20:00",
+  diasFuncionamento: [1, 2, 3, 4, 5, 6, 7],
+};
 
 const modal = document.getElementById("add-modal");
 const listaHojeEl = document.getElementById("appointments-list");
@@ -404,6 +409,25 @@ document
 
     const hoje = new Date();
     const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+    const diaDaSemana = hoje.getDay() || 7;
+    const [aberturaHora, aberturaMinuto] = funcionamento.horarioAbertura.split(":").map(Number);
+    const [encerramentoHora, encerramentoMinuto] = funcionamento.horarioEncerramento.split(":").map(Number);
+    const [horaSelecionada, minutoSelecionado] = horaInput.value.split(":").map(Number);
+    const inicioMinutos = horaSelecionada * 60 + minutoSelecionado;
+    const aberturaMinutos = aberturaHora * 60 + aberturaMinuto;
+    const encerramentoMinutos = encerramentoHora * 60 + encerramentoMinuto;
+    const duracao = servicoIds.reduce((total, id) => {
+      const servico = servicosDisponiveis.find((item) => Number(item.id) === id);
+      return total + (Number(servico?.duracaoMinutos) || 0);
+    }, 0);
+    if (!funcionamento.diasFuncionamento.includes(diaDaSemana)) {
+      alert("A barbearia não atende hoje.");
+      return;
+    }
+    if (inicioMinutos < aberturaMinutos || inicioMinutos + duracao > encerramentoMinutos) {
+      alert("O horário selecionado está fora do funcionamento da barbearia.");
+      return;
+    }
     const dataHora = `${dataHoje}T${horaInput.value}:00`;
 
     if (
@@ -467,20 +491,39 @@ document
 async function carregarDados() {
   await identificarBarbeiroLogado();
 
-  const [respServicos, respAgendamentos, respBarbeiros] = await Promise.all([
+  const [respServicos, respAgendamentos, respBarbeiros, respBarbearia] = await Promise.all([
     apiFetch("/api/servicos"),
     apiFetch("/api/agendamentos"),
     apiFetch("/api/barbeiros"),
+    apiFetch("/api/barbearia"),
   ]);
 
-  if (!respServicos || !respAgendamentos || !respBarbeiros) return;
-  if (!respServicos.ok || !respAgendamentos.ok || !respBarbeiros.ok) {
+  if (!respServicos || !respAgendamentos || !respBarbeiros || !respBarbearia) return;
+  if (!respServicos.ok || !respAgendamentos.ok || !respBarbeiros.ok || !respBarbearia.ok) {
     throw new Error("Não foi possível carregar os dados do painel.");
   }
 
-  servicosDisponiveis = await respServicos.json();
-  todosAgendamentos = await respAgendamentos.json();
-  barbeirosDisponiveis = await respBarbeiros.json();
+  [servicosDisponiveis, todosAgendamentos, barbeirosDisponiveis] = await Promise.all([
+    respServicos.json(),
+    respAgendamentos.json(),
+    respBarbeiros.json(),
+  ]);
+  const dadosBarbearia = await respBarbearia.json();
+  funcionamento = {
+    horarioAbertura: dadosBarbearia.horarioAbertura.slice(0, 5),
+    horarioEncerramento: dadosBarbearia.horarioEncerramento.slice(0, 5),
+    diasFuncionamento: dadosBarbearia.diasFuncionamento,
+  };
+  const horarioInput = document.getElementById("client-time");
+  const horarioAjuda = document.getElementById("client-time-help");
+  horarioInput.min = funcionamento.horarioAbertura;
+  horarioInput.max = funcionamento.horarioEncerramento;
+  horarioInput.step = 1800;
+  const diaAtual = new Date().getDay() || 7;
+  horarioInput.disabled = !funcionamento.diasFuncionamento.includes(diaAtual);
+  horarioAjuda.textContent = horarioInput.disabled
+    ? "A barbearia não atende hoje."
+    : `Atendimento das ${funcionamento.horarioAbertura} às ${funcionamento.horarioEncerramento}.`;
 
   popularSelectServicos();
   popularSelectBarbeiros();

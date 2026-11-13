@@ -13,6 +13,7 @@
   const shopName = document.getElementById("nome-barbearia");
   const shopPhoto = document.getElementById("barbearia-foto");
   const shopAddress = document.getElementById("barbearia-endereco");
+  const shopHours = document.getElementById("barbearia-horario");
 
   //  número do WhatsApp da barbearia (DDI + DDD + Número, apenas dígitos)
   const WHATSAPP_NUMERO = "5561986214939";
@@ -23,6 +24,9 @@
   let barberRequest = 0;
   let serviceRequest = 0;
   let isSubmitting = false;
+  let scheduleLoaded = false;
+  let funcionamento = null;
+  const diasNomes = ["", "segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
 
   function localDateString(date) {
     const year = date.getFullYear();
@@ -211,6 +215,7 @@
   }
 
   async function loadShop(barberId, requestId) {
+    scheduleLoaded = false;
     shopInfo.hidden = true;
     shopPhoto.hidden = true;
     shopAddress.textContent = "";
@@ -221,6 +226,12 @@
           `${api}/barbearia?barbeiroId=${encodeURIComponent(barberId)}`,
       );
       if (requestId !== barberRequest) return;
+      funcionamento = {
+        horarioAbertura: String(data.horarioAbertura || "").slice(0, 5),
+        horarioEncerramento: String(data.horarioEncerramento || "").slice(0, 5),
+        diasFuncionamento: data.diasFuncionamento || [],
+      };
+      scheduleLoaded = true;
       if (data.nomeBarbearia) shopName.textContent = data.nomeBarbearia;
       if (data.foto) {
         shopPhoto.src = data.foto;
@@ -231,7 +242,8 @@
         };
       }
       shopAddress.textContent = data.endereco ? `📍 ${data.endereco}` : "";
-      shopInfo.hidden = !data.foto && !data.endereco;
+      shopHours.textContent = `Atendimento: ${funcionamento.diasFuncionamento.map((dia) => diasNomes[dia]).join(", ")} · ${funcionamento.horarioAbertura} às ${funcionamento.horarioEncerramento}`;
+      shopInfo.hidden = false;
     } catch (error) {
       if (requestId === barberRequest) setMessage(error.message, "error");
     }
@@ -245,7 +257,8 @@
     serviceOptions.innerHTML = '<p class="loading-message">Carregando serviços...</p>';
     clearTimeOptions("Escolha um serviço e uma data");
     updateSubmitState();
-    loadShop(barberId, requestId);
+    await loadShop(barberId, requestId);
+    if (currentServiceRequest !== serviceRequest) return;
     if (!barberId) {
       serviceOptions.innerHTML = '<p class="empty-message">Selecione um barbeiro para ver os serviços.</p>';
       return;
@@ -281,6 +294,20 @@
 
     if (!barberId || !serviceIds.length || !selectedDate) {
       clearTimeOptions("Escolha a data, o barbeiro e o serviço");
+      return;
+    }
+    if (!scheduleLoaded || !funcionamento) {
+      clearTimeOptions("Não foi possível carregar o funcionamento");
+      setMessage("Não foi possível verificar os horários da barbearia.", "error");
+      updateSubmitState();
+      return;
+    }
+    const [ano, mes, dia] = selectedDate.split("-").map(Number);
+    const diaSemana = new Date(ano, mes - 1, dia).getDay() || 7;
+    if (!funcionamento.diasFuncionamento.includes(diaSemana)) {
+      clearTimeOptions("Barbearia fechada nesta data");
+      setMessage("A barbearia não atende neste dia da semana.", "error");
+      updateSubmitState();
       return;
     }
 

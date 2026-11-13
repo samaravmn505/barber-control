@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.math.BigDecimal;
 
 @Entity
 @Data
@@ -37,6 +39,16 @@ public class Usuario {
     private String telefone;
 
     private String nomeBarbearia;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal metaMensal;
+
+    private LocalTime horarioAbertura = LocalTime.of(8, 0);
+
+    private LocalTime horarioEncerramento = LocalTime.of(20, 0);
+
+    @Column(length = 20)
+    private String diasFuncionamento = "1,2,3,4,5,6,7";
 
     @Column(length = 255)
     private String endereco;

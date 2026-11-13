@@ -1,6 +1,8 @@
 package com.barbearia.agendamento.controller;
 
 import com.barbearia.agendamento.dto.AtendimentoPendenteFinanceiroResponse;
+import com.barbearia.agendamento.dto.MetaMensalRequest;
+import com.barbearia.agendamento.dto.MetaMensalResponse;
 import com.barbearia.agendamento.dto.MovimentoFinanceiroRequest;
 import com.barbearia.agendamento.dto.MovimentoFinanceiroResponse;
 import com.barbearia.agendamento.dto.ResumoFinanceiroResponse;
@@ -8,6 +10,7 @@ import com.barbearia.agendamento.model.MovimentoFinanceiro;
 import com.barbearia.agendamento.model.Usuario;
 import com.barbearia.agendamento.repository.AgendamentoRepository;
 import com.barbearia.agendamento.repository.MovimentoFinanceiroRepository;
+import com.barbearia.agendamento.repository.UsuarioRepository;
 import com.barbearia.agendamento.service.ContextoUsuario;
 import com.barbearia.agendamento.service.FinanceiroService;
 import com.barbearia.agendamento.service.UsuarioService;
@@ -32,17 +35,20 @@ public class FinanceiroController {
     private final ContextoUsuario contexto;
     private final MovimentoFinanceiroRepository movimentoRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public FinanceiroController(FinanceiroService financeiroService,
                                 UsuarioService usuarioService,
                                 ContextoUsuario contexto,
                                 MovimentoFinanceiroRepository movimentoRepository,
-                                AgendamentoRepository agendamentoRepository) {
+                                AgendamentoRepository agendamentoRepository,
+                                UsuarioRepository usuarioRepository) {
         this.financeiroService = financeiroService;
         this.usuarioService = usuarioService;
         this.contexto = contexto;
         this.movimentoRepository = movimentoRepository;
         this.agendamentoRepository = agendamentoRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     private List<MovimentoFinanceiroResponse> entradasDoBarbeiro(Usuario barbeiro, LocalDate inicio, LocalDate fim) {
@@ -53,7 +59,7 @@ public class FinanceiroController {
                         .thenComparing(MovimentoFinanceiro::getId).reversed())
                 .map(m -> new MovimentoFinanceiroResponse(
                         m.getId(), m.getTipo(), m.getData(), m.getNomeCliente(), m.getDescricao(),
-                        m.getCategoria(), m.getFormaPagamento(), m.getValor(), barbeiro.getNome(),
+                        m.getCategoria(), m.getTipoDespesa(), m.getFormaPagamento(), m.getValor(), barbeiro.getNome(),
                         m.getAgendamento().getId(),
                         m.getServicos().stream()
                                 .map(s -> new MovimentoFinanceiroResponse.ServicoRegistrado(
@@ -104,6 +110,36 @@ public class FinanceiroController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
         }
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/meta-mensal")
+    public ResponseEntity<?> buscarMetaMensal(Authentication authentication) {
+        var ctx = contexto.de(authentication);
+        Usuario responsavel = usuarioRepository.findById(ctx.barbeariaId())
+                .orElseThrow(() -> new IllegalArgumentException("Barbearia não encontrada."));
+        BigDecimal meta = responsavel.getMetaMensal();
+        return ResponseEntity.ok(new MetaMensalResponse(
+                meta == null ? new BigDecimal("10000.00") : meta));
+    }
+
+    @PutMapping("/meta-mensal")
+    public ResponseEntity<?> atualizarMetaMensal(@RequestBody MetaMensalRequest request,
+                                                  Authentication authentication) {
+        var ctx = contexto.de(authentication);
+        if (!ctx.admin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("erro", "Somente o administrador pode alterar a meta mensal."));
+        }
+        BigDecimal meta = request == null ? null : request.metaMensal();
+        if (meta == null || meta.compareTo(BigDecimal.ZERO) <= 0
+                || meta.compareTo(new BigDecimal("99999999.99")) > 0 || meta.scale() > 2) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("erro", "A meta deve ser maior que zero, ter até duas casas decimais e não ultrapassar R$ 99.999.999,99."));
+        }
+        ctx.usuario().setMetaMensal(meta);
+        usuarioRepository.save(ctx.usuario());
+        return ResponseEntity.ok(new MetaMensalResponse(meta));
     }
 
     @Transactional(readOnly = true)

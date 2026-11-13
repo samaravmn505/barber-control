@@ -65,6 +65,7 @@
             ></i>
           </button>
           <ul class="nav-financeiro-submenu">
+            <li><a href="financeiro-visao-geral.html">Visão geral</a></li>
             <li><a href="financeiro-entradas.html">Entrada</a></li>
             <li><a href="financeiro-saidas.html">Saída</a></li>
           </ul>
@@ -177,7 +178,9 @@
             <legend>Serviços</legend>
             <div class="servicos-opcoes" id="client-services"></div>
           </fieldset>
-          <input type="time" id="client-time" required />
+          <label for="client-time">Horário do atendimento</label>
+          <input type="time" id="client-time" step="1800" required />
+          <p id="client-time-help"></p>
           <div class="modal-actions">
             <button class="btn-cancel" id="close-modal-btn">Cancelar</button>
             <button class="btn-save" id="save-appointment-btn">Salvar</button>

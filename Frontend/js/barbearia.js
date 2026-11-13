@@ -3,6 +3,11 @@
     if (!formEl) return;
 
     const enderecoEl = document.getElementById("barbearia-endereco");
+    const aberturaEl = document.getElementById("barbearia-abertura");
+    const encerramentoEl = document.getElementById("barbearia-encerramento");
+    const diasFuncionamentoEls = Array.from(
+        formEl.querySelectorAll('input[name="diasFuncionamento"]'),
+    );
     const fotoEl = document.getElementById("barbearia-foto");
     const previewEl = document.getElementById("barbearia-preview");
     const removerEl = document.getElementById("barbearia-remover-foto");
@@ -40,6 +45,12 @@
         if (!resp || !resp.ok) return;
         const dados = await resp.json();
         enderecoEl.value = dados.endereco || "";
+        aberturaEl.value = (dados.horarioAbertura || "08:00").slice(0, 5);
+        encerramentoEl.value = (dados.horarioEncerramento || "20:00").slice(0, 5);
+        const dias = dados.diasFuncionamento || [1, 2, 3, 4, 5, 6, 7];
+        diasFuncionamentoEls.forEach((dia) => {
+            dia.checked = dias.includes(Number(dia.value));
+        });
         mostrarFoto(dados.foto);
     }
 
@@ -66,7 +77,24 @@
     formEl.addEventListener("submit", async (event) => {
         event.preventDefault();
         msgEl.textContent = "";
-        const corpo = { endereco: enderecoEl.value.trim() };
+        const diasFuncionamento = diasFuncionamentoEls
+            .filter((dia) => dia.checked)
+            .map((dia) => Number(dia.value));
+        if (!aberturaEl.value || !encerramentoEl.value || aberturaEl.value >= encerramentoEl.value) {
+            msgEl.textContent = "O encerramento deve ser posterior ao início dos atendimentos.";
+            return;
+        }
+        if (!diasFuncionamento.length) {
+            msgEl.textContent = "Selecione ao menos um dia de atendimento.";
+            return;
+        }
+
+        const corpo = {
+            endereco: enderecoEl.value.trim(),
+            horarioAbertura: aberturaEl.value,
+            horarioEncerramento: encerramentoEl.value,
+            diasFuncionamento,
+        };
         if (fotoNova !== null) corpo.foto = fotoNova;
 
         const resp = await apiFetch("/api/barbearia", { method: "PUT", body: JSON.stringify(corpo) });
@@ -76,7 +104,7 @@
             return;
         }
         fotoNova = null;
-        msgEl.textContent = "Dados da barbearia salvos.";
+        msgEl.textContent = "Dados e horários de funcionamento salvos.";
     });
 
     carregar();

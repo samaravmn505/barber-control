@@ -12,6 +12,7 @@ public record MovimentoFinanceiroRequest(
         String categoria,
         String formaPagamento,
         BigDecimal valor,
-        List<Long> servicoIds
+        List<Long> servicoIds,
+        String tipoDespesa
 ) {
 }

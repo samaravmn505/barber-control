@@ -11,6 +11,7 @@ public record MovimentoFinanceiroResponse(
         String nomeCliente,
         String descricao,
         String categoria,
+        String tipoDespesa,
         String formaPagamento,
         BigDecimal valor,
         String usuarioNome,

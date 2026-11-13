@@ -7,6 +7,7 @@ import com.barbearia.agendamento.repository.BloqueioRepository;
 import com.barbearia.agendamento.repository.ServicoRepository;
 import com.barbearia.agendamento.service.AgendamentoService;
 import com.barbearia.agendamento.service.ContextoUsuario;
+import com.barbearia.agendamento.service.FuncionamentoBarbearia;
 import com.barbearia.agendamento.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,9 @@ public class AgendamentoController {
     @Autowired
     private BloqueioRepository bloqueioRepository;
 
+    @Autowired
+    private FuncionamentoBarbearia funcionamento;
+
     private Optional<Agendamento> acessivel(Long id, ContextoUsuario.Atual ctx) {
         return agendamentoService.buscarPorIdDaBarbearia(id, ctx.barbeariaId())
                 .filter(a -> ctx.admin() || a.getBarbeiro().getId().equals(ctx.usuario().getId()));
@@ -58,21 +62,44 @@ public class AgendamentoController {
         return ResponseEntity.status(status).body(Map.of("erro", mensagem));
     }
 
-    private ResponseEntity<?> validarHorario(Usuario barbeiro, Long servicoId, LocalDateTime inicio, Long barbeariaId) {
-        if (inicio == null || servicoId == null) {
+    private ResponseEntity<?> validarHorario(Usuario barbeiro, List<Long> servicoIds,
+                                             LocalDateTime inicio, Long barbeariaId) {
+        if (inicio == null || servicoIds == null || servicoIds.isEmpty()) {
             return erro(HttpStatus.BAD_REQUEST, "Informe o serviço e o horário.");
         }
         if (inicio.isBefore(LocalDateTime.now())) {
             return erro(HttpStatus.BAD_REQUEST, "Esse horário já passou.");
         }
-        Servico servico = servicoRepository.findByIdAndBarbeariaId(servicoId, barbeariaId).orElse(null);
-        if (servico == null || servico.getDuracaoMinutos() == null) {
+        if (servicoIds.stream().anyMatch(id -> id == null || id <= 0)
+                || servicoIds.stream().distinct().count() != servicoIds.size()) {
+            return erro(HttpStatus.BAD_REQUEST, "A seleção de serviços é inválida.");
+        }
+        List<Servico> servicos = servicoIds.stream()
+                .map(id -> servicoRepository.findByIdAndBarbeariaId(id, barbeariaId).orElse(null))
+                .toList();
+        if (servicos.stream().anyMatch(servico ->
+                servico == null || servico.getDuracaoMinutos() == null || servico.getDuracaoMinutos() <= 0)) {
             return erro(HttpStatus.BAD_REQUEST, "Serviço inválido.");
         }
-        if (bloqueioRepository.existeConflito(barbeiro.getId(), inicio, inicio.plusMinutes(servico.getDuracaoMinutos()))) {
+        int duracao = servicos.stream().mapToInt(Servico::getDuracaoMinutos).sum();
+        Usuario barbearia = barbeiro.getBarbearia() == null ? barbeiro : barbeiro.getBarbearia();
+        LocalDateTime fim = inicio.plusMinutes(duracao);
+        if (!funcionamento.horarioPermitido(barbearia, inicio, fim)) {
+            return erro(HttpStatus.BAD_REQUEST, "Fora dos dias ou horários de funcionamento.");
+        }
+        if (bloqueioRepository.existeConflito(barbeiro.getId(), inicio, fim)) {
             return erro(HttpStatus.CONFLICT, "Horário indisponível para este barbeiro.");
         }
         return null;
+    }
+
+    private List<Long> idsServicos(Agendamento agendamento) {
+        if (agendamento.getServicos() != null && !agendamento.getServicos().isEmpty()) {
+            return agendamento.getServicos().stream().map(Servico::getId).toList();
+        }
+        return agendamento.getServico() == null
+                ? List.of()
+                : List.of(agendamento.getServico().getId());
     }
 
     @PostMapping
@@ -91,8 +118,8 @@ public class AgendamentoController {
                 barbeiro = ctx.usuario();
             }
 
-            Long servicoId = agendamento.getServico() != null ? agendamento.getServico().getId() : null;
-            ResponseEntity<?> invalido = validarHorario(barbeiro, servicoId, agendamento.getDataHora(), ctx.barbeariaId());
+            ResponseEntity<?> invalido = validarHorario(
+                    barbeiro, idsServicos(agendamento), agendamento.getDataHora(), ctx.barbeariaId());
             if (invalido != null) return invalido;
 
             agendamento.setBarbeiro(barbeiro);
@@ -185,13 +212,15 @@ public class AgendamentoController {
             if (existente.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
-            Long servicoId = agendamentoAtualizado.getServico() != null
-                    ? agendamentoAtualizado.getServico().getId()
-                    : existente.get().getServico().getId();
+            List<Long> servicoIds = idsServicos(agendamentoAtualizado);
+            if (servicoIds.isEmpty()) {
+                servicoIds = idsServicos(existente.get());
+            }
             LocalDateTime inicio = agendamentoAtualizado.getDataHora() != null
                     ? agendamentoAtualizado.getDataHora()
                     : existente.get().getDataHora();
-            ResponseEntity<?> invalido = validarHorario(existente.get().getBarbeiro(), servicoId, inicio, ctx.barbeariaId());
+            ResponseEntity<?> invalido = validarHorario(
+                    existente.get().getBarbeiro(), servicoIds, inicio, ctx.barbeariaId());
             if (invalido != null) return invalido;
 
             return ResponseEntity.ok(agendamentoService.atualizarAgendamento(id, agendamentoAtualizado));

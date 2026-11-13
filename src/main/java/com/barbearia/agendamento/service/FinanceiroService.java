@@ -28,6 +28,7 @@ import java.util.Set;
 public class FinanceiroService {
 
     private static final Set<String> TIPOS = Set.of("ENTRADA", "SAIDA");
+    private static final Set<String> TIPOS_DESPESA = Set.of("FIXA", "VARIAVEL");
     private static final Set<String> FORMAS_PAGAMENTO = Set.of("DINHEIRO", "PIX", "DEBITO", "CREDITO");
 
     private final MovimentoFinanceiroRepository movimentoRepository;
@@ -161,6 +162,10 @@ public class FinanceiroService {
             }
             movimento.setDescricao(descricao);
             movimento.setCategoria(categoria);
+            if (request.tipoDespesa() != null && !TIPOS_DESPESA.contains(request.tipoDespesa())) {
+                throw new IllegalArgumentException("Tipo de despesa inválido.");
+            }
+            movimento.setTipoDespesa(request.tipoDespesa());
             movimento.setValor(request.valor());
         }
 
@@ -322,6 +327,7 @@ public class FinanceiroService {
                 movimento.getNomeCliente(),
                 movimento.getDescricao(),
                 movimento.getCategoria(),
+                movimento.getTipoDespesa(),
                 movimento.getFormaPagamento(),
                 movimento.getValor(),
                 movimento.getUsuario().getNome(),

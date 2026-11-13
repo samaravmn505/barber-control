@@ -68,7 +68,8 @@ class FinanceiroServiceTests {
                 null,
                 "PIX",
                 new BigDecimal("1.00"),
-                List.of(1L, 2L)
+                List.of(1L, 2L),
+                null
         );
 
         MovimentoFinanceiroResponse resposta = financeiroService.registrar(request, usuario);
@@ -91,6 +92,7 @@ class FinanceiroServiceTests {
                 "Contas",
                 "BOLETO",
                 new BigDecimal("120.00"),
+                null,
                 null
         );
 
@@ -112,14 +114,34 @@ class FinanceiroServiceTests {
                 "Produtos",
                 "DEBITO",
                 new BigDecimal("189.90"),
-                null
+                null,
+                "FIXA"
         );
 
         MovimentoFinanceiroResponse resposta = financeiroService.registrar(request, usuario);
 
         assertEquals(new BigDecimal("189.90"), resposta.valor());
         assertEquals("Produtos", resposta.categoria());
+        assertEquals("FIXA", resposta.tipoDespesa());
         assertEquals("Compra de produtos", resposta.descricao());
+    }
+
+    @Test
+    void rejeitaClassificacaoDeDespesaInvalida() {
+        MovimentoFinanceiroRequest request = new MovimentoFinanceiroRequest(
+                "SAIDA",
+                LocalDate.of(2026, 10, 19),
+                null,
+                "Compra de produtos",
+                "Produtos",
+                "DEBITO",
+                new BigDecimal("189.90"),
+                null,
+                "RECORRENTE"
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> financeiroService.registrar(request, new Usuario()));
+        verify(movimentoRepository, never()).save(any());
     }
 
     @Test

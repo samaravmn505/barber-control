@@ -5,11 +5,14 @@ import com.barbearia.agendamento.dto.BarbeariaResponse;
 import com.barbearia.agendamento.model.Usuario;
 import com.barbearia.agendamento.repository.UsuarioRepository;
 import com.barbearia.agendamento.service.ContextoUsuario;
+import com.barbearia.agendamento.service.FuncionamentoBarbearia;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @RestController
@@ -21,18 +24,33 @@ public class BarbeariaController {
 
     private final UsuarioRepository usuarioRepository;
     private final ContextoUsuario contexto;
+    private final FuncionamentoBarbearia funcionamento;
 
-    public BarbeariaController(UsuarioRepository usuarioRepository, ContextoUsuario contexto) {
+    public BarbeariaController(UsuarioRepository usuarioRepository,
+                               ContextoUsuario contexto,
+                               FuncionamentoBarbearia funcionamento) {
         this.usuarioRepository = usuarioRepository;
         this.contexto = contexto;
+        this.funcionamento = funcionamento;
+    }
+
+    private BarbeariaResponse resposta(Usuario barbearia) {
+        var dados = funcionamento.dados(barbearia);
+        return new BarbeariaResponse(
+                barbearia.getNomeBarbearia(),
+                barbearia.getEndereco(),
+                barbearia.getFoto(),
+                dados.horarioAbertura(),
+                dados.horarioEncerramento(),
+                dados.diasFuncionamento()
+        );
     }
 
     @GetMapping
     public ResponseEntity<?> buscar(Authentication authentication) {
         var ctx = contexto.de(authentication);
         return usuarioRepository.findById(ctx.barbeariaId())
-                .<ResponseEntity<?>>map(b -> ResponseEntity.ok(
-                        new BarbeariaResponse(b.getNomeBarbearia(), b.getEndereco(), b.getFoto())))
+                .<ResponseEntity<?>>map(b -> ResponseEntity.ok(resposta(b)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -40,6 +58,30 @@ public class BarbeariaController {
     public ResponseEntity<?> atualizar(@RequestBody BarbeariaRequest request, Authentication authentication) {
         var ctx = contexto.de(authentication);
         Usuario barbearia = ctx.usuario();
+        boolean atualizaFuncionamento = request.horarioAbertura() != null
+                || request.horarioEncerramento() != null
+                || request.diasFuncionamento() != null;
+
+        if (atualizaFuncionamento && !ctx.admin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("erro", "Somente o administrador pode alterar o funcionamento da barbearia."));
+        }
+        if (atualizaFuncionamento) {
+            if (request.horarioAbertura() == null || request.horarioEncerramento() == null
+                    || request.diasFuncionamento() == null
+                    || !request.horarioAbertura().isBefore(request.horarioEncerramento())) {
+                return ResponseEntity.badRequest().body(Map.of("erro", "Informe um intervalo de horários válido."));
+            }
+            List<Integer> dias = request.diasFuncionamento();
+            if (dias.isEmpty() || dias.stream().anyMatch(dia -> dia == null || dia < 1 || dia > 7)
+                    || dias.stream().distinct().count() != dias.size()) {
+                return ResponseEntity.badRequest().body(Map.of("erro", "Selecione ao menos um dia válido da semana."));
+            }
+            barbearia.setHorarioAbertura(request.horarioAbertura());
+            barbearia.setHorarioEncerramento(request.horarioEncerramento());
+            barbearia.setDiasFuncionamento(dias.stream().sorted()
+                    .map(String::valueOf).collect(java.util.stream.Collectors.joining(",")));
+        }
 
         if (request.endereco() != null) {
             String endereco = request.endereco().trim();
@@ -62,7 +104,6 @@ public class BarbeariaController {
         }
 
         usuarioRepository.save(barbearia);
-        return ResponseEntity.ok(new BarbeariaResponse(
-                barbearia.getNomeBarbearia(), barbearia.getEndereco(), barbearia.getFoto()));
+        return ResponseEntity.ok(resposta(barbearia));
     }
 }

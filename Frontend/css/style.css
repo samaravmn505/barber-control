@@ -631,6 +631,19 @@ body {
   font-size: 12px;
 }
 
+.dia-fechado::after {
+  content: "A barbearia não atende neste dia";
+  display: block;
+  margin-top: 8px;
+  color: #999;
+  font-size: 12px;
+}
+
+.day-cell.closed-day:not(.selected) {
+  background-color: #e8e8e8;
+  color: #777;
+}
+
 .day-cell.empty {
   background: transparent;
   cursor: default;
@@ -934,6 +947,39 @@ body {
   border: 1px solid #ccc;
   border-radius: 7px;
   font-size: 14px;
+}
+
+.dias-funcionamento {
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.dias-funcionamento legend {
+  padding: 0 6px;
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dias-funcionamento-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.dias-funcionamento-opcoes label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #444;
+  font-size: 13px;
+}
+
+.dias-funcionamento-opcoes input {
+  width: auto;
+  accent-color: #d5a400;
 }
 
 #servico-foto-ajuda {

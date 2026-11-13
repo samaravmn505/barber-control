@@ -58,6 +58,7 @@
             ></i>
           </button>
           <ul class="nav-financeiro-submenu">
+            <li><a href="financeiro-visao-geral.html">Visão geral</a></li>
             <li><a href="financeiro-entradas.html">Entrada</a></li>
             <li>
               <a
@@ -193,6 +194,14 @@
               </div>
               <div class="financeiro-duas-colunas">
                 <div class="financeiro-campo">
+                  <label for="tipo-despesa">Tipo de despesa</label>
+                  <select id="tipo-despesa" required>
+                    <option value="">Selecione</option>
+                    <option value="FIXA">Fixa</option>
+                    <option value="VARIAVEL">Variável</option>
+                  </select>
+                </div>
+                <div class="financeiro-campo">
                   <label for="valor">Valor (R$)</label>
                   <input
                     id="valor"
@@ -204,16 +213,16 @@
                     required
                   />
                 </div>
-                <div class="financeiro-campo">
-                  <label for="forma-pagamento">Forma de pagamento</label>
-                  <select id="forma-pagamento" required>
-                    <option value="">Selecione</option>
-                    <option value="DINHEIRO">Dinheiro</option>
-                    <option value="PIX">Pix</option>
-                    <option value="DEBITO">Débito</option>
-                    <option value="CREDITO">Crédito</option>
-                  </select>
-                </div>
+              </div>
+              <div class="financeiro-campo">
+                <label for="forma-pagamento">Forma de pagamento</label>
+                <select id="forma-pagamento" required>
+                  <option value="">Selecione</option>
+                  <option value="DINHEIRO">Dinheiro</option>
+                  <option value="PIX">Pix</option>
+                  <option value="DEBITO">Débito</option>
+                  <option value="CREDITO">Crédito</option>
+                </select>
               </div>
               <p
                 class="financeiro-form-feedback"

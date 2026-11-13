@@ -10,6 +10,7 @@ import com.barbearia.agendamento.repository.BloqueioRepository;
 import com.barbearia.agendamento.repository.ServicoRepository;
 import com.barbearia.agendamento.repository.UsuarioRepository;
 import com.barbearia.agendamento.service.AgendamentoService;
+import com.barbearia.agendamento.service.FuncionamentoBarbearia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +29,6 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/publico")
 public class PublicoController {
 
-    private static final LocalTime ABERTURA = LocalTime.of(8, 0);
-    private static final LocalTime FECHAMENTO = LocalTime.of(20, 0);
     private static final int INTERVALO_MINUTOS = 30;
     private static final Pattern NOME_VALIDO = Pattern.compile("^[\\p{L} .'-]{2,100}$");
 
@@ -48,6 +46,9 @@ public class PublicoController {
 
     @Autowired
     private BloqueioRepository bloqueioRepository;
+
+    @Autowired
+    private FuncionamentoBarbearia funcionamento;
 
     public record ServicoPublico(Long id, String nome, BigDecimal valor, Integer duracaoMinutos, String foto) {}
 
@@ -73,7 +74,15 @@ public class PublicoController {
             return erro(HttpStatus.BAD_REQUEST, "Barbeiro inválido.");
         }
         Usuario b = barbeiro.getBarbearia();
-        return ResponseEntity.ok(new BarbeariaResponse(b.getNomeBarbearia(), b.getEndereco(), b.getFoto()));
+        var dados = funcionamento.dados(b);
+        return ResponseEntity.ok(new BarbeariaResponse(
+                b.getNomeBarbearia(),
+                b.getEndereco(),
+                b.getFoto(),
+                dados.horarioAbertura(),
+                dados.horarioEncerramento(),
+                dados.diasFuncionamento()
+        ));
     }
 
     @GetMapping("/servicos")
@@ -116,6 +125,10 @@ public class PublicoController {
             return ResponseEntity.badRequest().body(Map.of("erro", "Serviço inválido."));
         }
         int duracao = servicos.stream().mapToInt(Servico::getDuracaoMinutos).sum();
+        Usuario barbearia = barbeiro.getBarbearia();
+        if (!funcionamento.atendeNoDia(barbearia, data)) {
+            return ResponseEntity.ok(List.of());
+        }
 
         List<Agendamento> doDia = agendamentoRepository.findByBarbeiroId(barbeiroId).stream()
                 .filter(a -> !"CANCELADO".equals(a.getStatus()))
@@ -124,8 +137,10 @@ public class PublicoController {
 
         LocalDateTime agora = LocalDateTime.now();
         List<String> livres = new ArrayList<>();
+        var abertura = funcionamento.horarioAbertura(barbearia);
+        var encerramento = funcionamento.horarioEncerramento(barbearia);
 
-        for (LocalTime h = ABERTURA; !h.plusMinutes(duracao).isAfter(FECHAMENTO); h = h.plusMinutes(INTERVALO_MINUTOS)) {
+        for (var h = abertura; !h.plusMinutes(duracao).isAfter(encerramento); h = h.plusMinutes(INTERVALO_MINUTOS)) {
             LocalDateTime inicio = data.atTime(h);
             LocalDateTime fim = inicio.plusMinutes(duracao);
 
@@ -170,11 +185,6 @@ public class PublicoController {
             return erro(HttpStatus.BAD_REQUEST, "Esse horário já passou.");
         }
 
-        LocalTime hora = req.dataHora().toLocalTime();
-        if (hora.isBefore(ABERTURA) || !hora.isBefore(FECHAMENTO)) {
-            return erro(HttpStatus.BAD_REQUEST, "Fora do horário de funcionamento.");
-        }
-
         Usuario barbeiro = usuarioRepository.findByIdComBarbearia(req.barbeiroId())
                 .filter(u -> "BARBEIRO".equals(u.getRole()) && u.getBarbearia() != null)
                 .orElse(null);
@@ -191,6 +201,12 @@ public class PublicoController {
         }
 
         int duracao = servicosValidados.stream().mapToInt(Servico::getDuracaoMinutos).sum();
+        if (!funcionamento.horarioPermitido(
+                barbeiro.getBarbearia(),
+                req.dataHora(),
+                req.dataHora().plusMinutes(duracao))) {
+            return erro(HttpStatus.BAD_REQUEST, "Fora dos dias ou horários de funcionamento.");
+        }
         if (bloqueioRepository.existeConflito(barbeiro.getId(), req.dataHora(), req.dataHora().plusMinutes(duracao))) {
             return erro(HttpStatus.CONFLICT, "Esse horário não está mais disponível.");
         }

@@ -337,7 +337,8 @@ function renderizarOperacoes() {
     const titulo = tipoFinanceiro === "ENTRADA" ? operacao.nomeCliente : operacao.descricao;
     const detalhe = tipoFinanceiro === "ENTRADA"
         ? (operacao.servicos || []).map((servico) => servico.nome).join(", ")
-        : operacao.categoria;
+        : [operacao.categoria, operacao.tipoDespesa === "FIXA" ? "Fixa" : operacao.tipoDespesa === "VARIAVEL" ? "Variável" : null]
+            .filter(Boolean).join(" · ");
     return `
       <article class="operacao-item">
         <div class="operacao-detalhes">
@@ -474,6 +475,7 @@ async function registrarOperacao(evento) {
         data: dataRegistroEl.value,
         descricao: document.getElementById("descricao").value.trim(),
         categoria: document.getElementById("categoria").value,
+        tipoDespesa: document.getElementById("tipo-despesa").value,
         valor: Number(document.getElementById("valor").value),
         formaPagamento: document.getElementById("forma-pagamento").value,
       };

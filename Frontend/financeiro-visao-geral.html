@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/financeiro.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Visão geral financeira - BarberControl</title>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="profile-container">
+        <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="profile-name" id="profile-name">Carregando...</div>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="painel.html" class="nav-link"><i class="fa-solid fa-house"></i> Início</a>
+        </li>
+        <li class="nav-item">
+          <a href="agendamento.html" class="nav-link"><i class="fa-regular fa-calendar-days"></i> Agendamentos</a>
+        </li>
+        <li class="nav-item">
+          <a href="servicos.html" class="nav-link"><i class="fa-solid fa-bars"></i> Serviços</a>
+        </li>
+        <li class="nav-item">
+          <a href="barbeiros.html" class="nav-link"><i class="fa-solid fa-user-group"></i> Barbeiros</a>
+        </li>
+        <li class="nav-item">
+          <a href="notificacoes.html" class="nav-link">
+            <i class="fa-regular fa-bell"></i> Notificações
+            <span class="notification-badge" aria-label="0 notificações não lidas" hidden>0</span>
+          </a>
+        </li>
+        <li class="nav-item nav-financeiro is-open">
+          <button type="button" class="nav-link nav-financeiro-toggle" aria-expanded="true">
+            <i class="fa-solid fa-wallet"></i> Financeiro
+            <i class="fa-solid fa-chevron-down nav-financeiro-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-financeiro-submenu">
+            <li><a class="active" href="financeiro-visao-geral.html" aria-current="page">Visão geral</a></li>
+            <li><a href="financeiro-entradas.html">Entrada</a></li>
+            <li><a href="financeiro-saidas.html">Saída</a></li>
+          </ul>
+        </li>
+        <li class="nav-item" style="border: none">
+          <a href="login.html" id="btn-logout" class="nav-link">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <main class="main-content financeiro-main">
+      <section class="financeiro-page">
+        <header class="financeiro-header">
+          <div>
+            <h1>Visão geral</h1>
+            <p>Acompanhe os resultados, a agenda e as oportunidades da barbearia.</p>
+          </div>
+          <form class="periodo-filtros visao-filtros" id="form-filtros">
+            <label>De <input type="date" id="filtro-inicio" required /></label>
+            <label>Até <input type="date" id="filtro-fim" required /></label>
+            <label>
+              Profissional
+              <select id="filtro-profissional">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <label>
+              Unidade
+              <select id="filtro-unidade" aria-label="Unidade da barbearia"></select>
+            </label>
+            <label>
+              Pagamento
+              <select id="filtro-pagamento">
+                <option value="">Todas as formas</option>
+                <option value="DINHEIRO">Dinheiro</option>
+                <option value="PIX">Pix</option>
+                <option value="DEBITO">Débito</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </label>
+            <button class="financeiro-btn financeiro-btn-dark" type="submit">
+              <i class="fa-solid fa-filter"></i> Aplicar
+            </button>
+          </form>
+        </header>
+
+        <p class="visao-nota">
+          O cadastro atual possui uma unidade. Profissional filtra receitas e agenda; pagamento filtra
+          receitas e despesas. Cancelamentos não possuem forma de pagamento associada.
+        </p>
+        <div class="financeiro-status" id="visao-status" role="status" aria-live="polite"></div>
+
+        <section class="financeiro-kpis visao-kpis" aria-label="Indicadores financeiros">
+          <article class="financeiro-kpi principal">
+            <p>Faturamento</p>
+            <strong id="kpi-faturamento">R$ 0,00</strong>
+            <small id="comparativo-faturamento">No período selecionado</small>
+          </article>
+          <article class="financeiro-kpi">
+            <p>Gastos</p>
+            <strong id="kpi-gastos">R$ 0,00</strong>
+            <small id="comparativo-gastos">No período selecionado</small>
+          </article>
+          <article class="financeiro-kpi secundario">
+            <p>Lucro</p>
+            <strong id="kpi-lucro">R$ 0,00</strong>
+            <small id="comparativo-lucro">Faturamento menos gastos</small>
+          </article>
+          <article class="financeiro-kpi">
+            <p>Ticket médio</p>
+            <strong id="kpi-ticket">R$ 0,00</strong>
+            <small id="comparativo-ticket">Por atendimento</small>
+          </article>
+          <article class="financeiro-kpi">
+            <p>Ponto de equilíbrio</p>
+            <strong id="kpi-equilibrio">R$ 0,00</strong>
+            <small id="legenda-equilibrio">Faturamento necessário no período</small>
+          </article>
+        </section>
+
+        <section class="visao-grid">
+          <article class="financeiro-card visao-card visao-largo">
+            <div class="financeiro-card-heading">
+              <div><h2>Faturamento, gastos e lucro</h2><p>Evolução no período selecionado</p></div>
+            </div>
+            <div class="financeiro-chart-wrap visao-chart"><canvas id="grafico-financeiro"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Meta mensal</h2><p id="meta-legenda">Faturamento do mês atual</p></div>
+              <button class="financeiro-btn financeiro-btn-outline" id="btn-editar-meta" type="button" hidden>Editar</button>
+            </div>
+            <strong class="visao-meta-valor" id="meta-progresso-texto">R$ 0,00 de R$ 0,00</strong>
+            <div class="visao-progress"><span id="meta-progresso-barra"></span></div>
+            <p class="visao-meta-restante" id="meta-restante"></p>
+            <form class="visao-meta-form" id="form-meta" hidden>
+              <label for="meta-mensal-input">Meta mensal (R$)</label>
+              <div><input id="meta-mensal-input" type="number" min="0.01" step="0.01" required />
+                <button class="financeiro-btn financeiro-btn-primary" type="submit">Salvar</button></div>
+            </form>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Serviços mais vendidos</h2><p>Quantidade de serviços registrados</p></div>
+            </div>
+            <div class="financeiro-chart-wrap"><canvas id="grafico-servicos"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Dias mais movimentados</h2><p>Atendimentos concluídos por dia da semana</p></div>
+            </div>
+            <div class="financeiro-chart-wrap"><canvas id="grafico-dias"></canvas></div>
+            <p class="visao-insight" id="dias-insight"></p>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Receita por profissional</h2><p>Entradas vinculadas a atendimentos</p></div>
+            </div>
+            <div class="financeiro-chart-wrap"><canvas id="grafico-profissionais"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Receita por minuto</h2><p>Preço do serviço dividido pela duração cadastrada</p></div>
+            </div>
+            <div class="financeiro-chart-wrap"><canvas id="grafico-por-minuto"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Despesas fixas e variáveis</h2><p>Classificação informada no lançamento</p></div>
+            </div>
+            <div class="financeiro-chart-wrap financeiro-chart-donut"><canvas id="grafico-despesas"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Receita por forma de pagamento</h2><p>Distribuição das entradas</p></div>
+            </div>
+            <div class="financeiro-chart-wrap financeiro-chart-donut"><canvas id="grafico-pagamentos"></canvas></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Comparecimento e cancelamento</h2><p>Agendamentos finalizados no período</p></div>
+            </div>
+            <div class="financeiro-chart-wrap financeiro-chart-donut"><canvas id="grafico-presenca"></canvas></div>
+            <p class="visao-insight" id="presenca-insight"></p>
+          </article>
+          <article class="financeiro-card visao-card visao-largo">
+            <div class="financeiro-card-heading">
+              <div><h2>Mapa de calor da agenda</h2><p>Dias da semana e horários dos atendimentos, exceto cancelados</p></div>
+            </div>
+            <div class="visao-heatmap" id="mapa-calor" aria-label="Mapa de calor de dias e horários"></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Dias menos movimentados</h2><p>Menor volume de atendimentos concluídos</p></div>
+            </div>
+            <div class="visao-dias-lista" id="dias-menos-movimentados"></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Últimas 5 entradas</h2><p>Movimentações no período aplicado</p></div>
+            </div>
+            <div class="lista-operacoes" id="ultimas-entradas"></div>
+          </article>
+          <article class="financeiro-card visao-card">
+            <div class="financeiro-card-heading">
+              <div><h2>Últimas 4 saídas</h2><p>Despesas no período aplicado</p></div>
+            </div>
+            <div class="lista-operacoes" id="ultimas-saidas"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/sidebar-barbearia.js"></script>
+    <script src="js/menu-financeiro.js"></script>
+    <script src="js/financeiro-visao-geral.js"></script>
+  </body>
+</html>

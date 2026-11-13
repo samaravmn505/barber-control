@@ -36,6 +36,9 @@ public class MovimentoFinanceiro {
     @Column(length = 80)
     private String categoria;
 
+    @Column(length = 12)
+    private String tipoDespesa;
+
     @Column(nullable = false, length = 20)
     private String formaPagamento;
 
